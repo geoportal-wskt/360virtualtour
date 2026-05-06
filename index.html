@@ -147,27 +147,45 @@
             }
         }
 
-        // Fungsi Parser CSV ke JSON
         function parseCSV(csv) {
             const lines = csv.split("\n");
             const result = [];
-            const headers = lines[0].split(","); // nama, path, tanggal, timestamp, editor
+            
+            // Deteksi otomatis pemisah (koma atau titik koma)
+            const delimiter = lines[0].includes(";") ? ";" : ",";
+            
+            // Ambil header untuk verifikasi (opsional)
+            const headers = lines[0].split(delimiter);
 
             for (let i = 1; i < lines.length; i++) {
                 if (!lines[i].trim()) continue;
-                const obj = {};
-                const currentline = lines[i].split(",");
-
-                obj.nama = currentline[0]?.trim();
-                obj.path = currentline[1]?.trim();
-                obj.tanggal = currentline[2]?.trim();
-                obj.timestamp = currentline[3]?.trim();
-                obj.editor = currentline[4]?.trim();
                 
-                result.push(obj);
+                const currentline = lines[i].split(delimiter);
+
+                // PEMETAAN KOLOM BERDASARKAN GOOGLE SHEETS ANDA:
+                // currentline[0] = Timestamp Otomatis (Gambar Anda)
+                // currentline[1] = nama
+                // currentline[2] = path
+                // currentline[3] = tanggal
+                // currentline[4] = timestamp (Python)
+                // currentline[5] = editor
+
+                const obj = {
+                    nama: currentline[1]?.replace(/"/g, '').trim(),
+                    path: currentline[2]?.replace(/"/g, '').trim(),
+                    tanggal: currentline[3]?.replace(/"/g, '').trim(),
+                    timestamp: currentline[0]?.replace(/"/g, '').trim(), // Kita pakai timestamp asli Google untuk sorting
+                    editor: currentline[5]?.replace(/"/g, '').trim()
+                };
+                
+                // Hanya masukkan jika 'nama' tidak kosong
+                if (obj.nama) {
+                    result.push(obj);
+                }
             }
-            // Sortir terbaru (Timestamp)
-            return result.sort((a, b) => b.timestamp - a.timestamp);
+
+            // Sortir: Proyek terbaru (berdasarkan Timestamp Kolom A) muncul paling atas
+            return result.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         }
 
         function renderProjects(data) {
