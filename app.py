@@ -5,6 +5,8 @@ import os
 import base64
 from datetime import datetime
 from streamlit_gsheets import GSheetsConnection
+import requests
+from datetime import datetime
 
 st.set_page_config(page_title="GIS-DS 360 Generator", layout="wide")
 
@@ -88,57 +90,29 @@ else:
 
 def update_projects_database(nama_proyek, path_relatif_folder, tanggal_str):
     """
-    Menggantikan penyimpanan JSON lokal dengan sinkronisasi ke Google Sheets Cloud.
+    Fungsi ini mengirim data ke Google Sheets melalui Google Form (Tanpa Google Cloud Console).
     """
+    # URL Google Form Anda (sudah saya sesuaikan)
+    url = "https://docs.google.com/forms/d/e/1FAIpQLSd_jfuTzmgiMTNfkJnj6tyTlakhav6y5583POSBhYX4RvTGvQ/formResponse"
+    
+    # ID Entry yang Anda temukan tadi
+    payload = {
+        "entry.1909594847": nama_proyek,          # Nama Proyek
+        "entry.1997775924": path_relatif_folder,  # Path / Folder
+        "entry.473746175": tanggal_str,           # Tanggal
+        "entry.1021577494": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), # Waktu Input
+        "entry.2051024028": st.session_state.get('user_full_name', 'System') # Nama Editor
+    }
+
     try:
-        # 1. Inisialisasi Koneksi ke Google Sheets
-        # Pastikan sudah memasukkan credentials di Streamlit Secrets
-        conn = st.connection("gsheets", type=GSheetsConnection)
-
-        # 2. Baca data lama dari Google Sheets
-        # ttl=0 memastikan kita tidak mengambil data dari memori cache (selalu terbaru)
-        try:
-            data_proyek = conn.read(ttl=0)
-            # Membersihkan baris kosong jika ada
-            data_proyek = data_proyek.dropna(how='all')
-        except:
-            # Jika sheet benar-benar baru/kosong, buat DataFrame kosong dengan kolom yang sesuai
-            data_proyek = pd.DataFrame(columns=["nama", "path", "tanggal", "timestamp", "editor"])
-
-        # 3. Siapkan entri baru (Menggunakan DataFrame karena st-gsheets mewajibkan format ini)
-        new_entry = pd.DataFrame([{
-            "nama": nama_proyek,
-            "path": path_relatif_folder,
-            "tanggal": tanggal_str,
-            "timestamp": datetime.now().strftime("%Y%m%d%H%M%S"),
-            "editor": st.session_state.get('user_full_name', 'System') # Mencatat siapa yang input
-        }])
-
-        # 4. Cek duplikat & Gabungkan
-        # Kita cek apakah 'path' sudah pernah ada di database
-        is_duplicate = False
-        if not data_proyek.empty and 'path' in data_proyek.columns:
-            if path_relatif_folder in data_proyek['path'].values:
-                is_duplicate = True
-
-        if not is_duplicate:
-            # Gabungkan data lama dan baru
-            updated_df = pd.concat([data_proyek, new_entry], ignore_index=True)
-            
-            # Urutkan berdasarkan timestamp terbaru di posisi paling atas
-            updated_df = updated_df.sort_values(by="timestamp", ascending=False)
-
-            # 5. Tulis (Upload) kembali ke Google Sheets
-            conn.update(data=updated_df)
-            st.success(f"✅ Proyek '{nama_proyek}' berhasil disinkronkan ke Google Sheets!")
+        # Proses 'mengetik' otomatis ke Google Form
+        response = requests.post(url, data=payload)
+        if response.status_code == 200:
+            st.success(f"✅ Proyek '{nama_proyek}' berhasil dicatat di Cloud!")
         else:
-            st.info(f"ℹ️ Data untuk path '{path_relatif_folder}' sudah ada, database tidak diupdate.")
-
+            st.error(f"⚠️ Gagal sinkronisasi. Error Code: {response.status_code}")
     except Exception as e:
-        st.error(f"⚠️ Gagal sinkronisasi ke Cloud: {str(e)}")
-        st.warning("Pastikan Anda sudah mengatur 'Secrets' di Dashboard Streamlit.")
-
-# =========================================================
+        st.error(f"Terjadi kesalahan koneksi: {e}")
 
 # ==========================================
 # UI APLIKASI UTAMA (TIDAK ADA YANG DIUBAH)
