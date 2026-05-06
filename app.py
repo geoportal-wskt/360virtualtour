@@ -3,47 +3,142 @@ import streamlit.components.v1 as components
 import pandas as pd
 import os
 import base64
-import json  # <-- TAMBAHAN BARU: Wajib untuk membuat database dashboard
 from datetime import datetime
+from streamlit_gsheets_connection import GSheetsConnection
 
 st.set_page_config(page_title="GIS-DS 360 Generator", layout="wide")
 
 # ==========================================
-# FUNGSI UPDATE HUB DASHBOARD (VERSI JSON)
+# 1. KONFIGURASI KREDENSIAL & ROLE
 # ==========================================
-# Fungsi ini menggantikan fungsi lama yang mengedit HTML statis, 
-# sekarang fokus membuat projects.json untuk Dashboard Tailwind yang baru.
-def update_projects_database(nama_proyek, path_relatif_folder, tanggal_str):
-    db_path = "projects.json"
+# Data ini bisa dipindah ke file database/secret nantinya
+USERS = {
+    "admin_gis": {"password": "Infra12345%", "role": "admin", "nama": "Administrator GIS"},
+    "tim_proyek": {"password": "proyek2026", "role": "proyek", "nama": "Tim Lapangan Proyek"}
+}
+
+# ==========================================
+# 2. SISTEM LOGIN (SESSION STATE)
+# ==========================================
+def init_auth():
+    if 'logged_in' not in st.session_state:
+        st.session_state.logged_in = False
+        st.session_state.user_role = None
+        st.session_state.user_full_name = ""
+
+def login_ui():
+    st.sidebar.image("https://upload.wikimedia.org/wikipedia/id/a/af/Waskita_Karya_logo.svg", width=200)
+    st.sidebar.title("🔐 Akses Internal")
     
-    # 1. Cek atau buat data awal
-    if os.path.exists(db_path):
-        try:
-            with open(db_path, "r", encoding="utf-8") as f:
-                data_proyek = json.load(f)
-        except:
-            data_proyek = []
-    else:
-        data_proyek = []
-
-    # 2. Siapkan entri baru
-    new_entry = {
-        "nama": nama_proyek,
-        "path": path_relatif_folder,
-        "tanggal": tanggal_str,
-        "timestamp": datetime.now().strftime("%Y%m%d%H%M%S")
-    }
-
-    # 3. Masukkan jika belum ada (mencegah duplikat)
-    if not any(d.get('path') == path_relatif_folder for d in data_proyek):
-        data_proyek.append(new_entry)
-        # Urutkan berdasarkan yang terbaru
-        data_proyek.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+    with st.sidebar.form("login_form"):
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        submit = st.form_submit_button("Login")
         
-        # 4. Tulis ke file JSON
-        with open(db_path, "w", encoding="utf-8") as f:
-            json.dump(data_proyek, f, indent=4)
+        if submit:
+            if username in USERS and USERS[username]["password"] == password:
+                st.session_state.logged_in = True
+                st.session_state.user_role = USERS[username]["role"]
+                st.session_state.user_full_name = USERS[username]["nama"]
+                st.success(f"Selamat datang, {st.session_state.user_full_name}")
+                st.rerun()
+            else:
+                st.error("Username atau Password salah!")
 
+def logout():
+    if st.sidebar.button("🚪 Logout"):
+        st.session_state.logged_in = False
+        st.session_state.user_role = None
+        st.rerun()
+
+# Jalankan Inisialisasi
+init_auth()
+
+if not st.session_state.logged_in:
+    login_ui()
+    st.info("💡 Silakan masukkan kredensial pada sidebar untuk mengakses sistem.")
+    st.stop() # Mengunci seluruh aplikasi di bawah baris ini
+else:
+    logout()
+    st.sidebar.markdown("---")
+    st.sidebar.write(f"👤 **User:** {st.session_state.user_full_name}")
+    st.sidebar.write(f"🔰 **Role:** {st.session_state.user_role.upper()}")
+
+# ==========================================
+# 3. KODE APLIKASI UTAMA (LANJUTKAN DISINI)
+# ==========================================
+
+# --- Contoh Pembatasan Menu Hapus (Hanya Admin) ---
+if st.session_state.user_role == "admin":
+    with st.expander("⚠️ Pengaturan Database (Hanya Admin)"):
+        st.warning("Menu ini hanya dapat diakses oleh Admin GIS.")
+        if st.button("🗑️ Reset Database (projects.json)"):
+            if os.path.exists("projects.json"):
+                os.remove("projects.json")
+                st.success("Database berhasil dihapus!")
+                st.rerun()
+else:
+    st.info("ℹ️ Anda masuk sebagai Tim Proyek. Anda dapat menambahkan tur baru, namun fitur penghapusan dinonaktifkan.")
+
+# Masukkan kode selectbox proyek, upload foto, dan fungsi generator Anda di bawah sini...
+
+# =========================================================
+# VERSI GOOGLE SHEETS (COP-PAS READY)
+# =========================================================
+
+def update_projects_database(nama_proyek, path_relatif_folder, tanggal_str):
+    """
+    Menggantikan penyimpanan JSON lokal dengan sinkronisasi ke Google Sheets Cloud.
+    """
+    try:
+        # 1. Inisialisasi Koneksi ke Google Sheets
+        # Pastikan sudah memasukkan credentials di Streamlit Secrets
+        conn = st.connection("gsheets", type=GSheetsConnection)
+
+        # 2. Baca data lama dari Google Sheets
+        # ttl=0 memastikan kita tidak mengambil data dari memori cache (selalu terbaru)
+        try:
+            data_proyek = conn.read(ttl=0)
+            # Membersihkan baris kosong jika ada
+            data_proyek = data_proyek.dropna(how='all')
+        except:
+            # Jika sheet benar-benar baru/kosong, buat DataFrame kosong dengan kolom yang sesuai
+            data_proyek = pd.DataFrame(columns=["nama", "path", "tanggal", "timestamp", "editor"])
+
+        # 3. Siapkan entri baru (Menggunakan DataFrame karena st-gsheets mewajibkan format ini)
+        new_entry = pd.DataFrame([{
+            "nama": nama_proyek,
+            "path": path_relatif_folder,
+            "tanggal": tanggal_str,
+            "timestamp": datetime.now().strftime("%Y%m%d%H%M%S"),
+            "editor": st.session_state.get('user_full_name', 'System') # Mencatat siapa yang input
+        }])
+
+        # 4. Cek duplikat & Gabungkan
+        # Kita cek apakah 'path' sudah pernah ada di database
+        is_duplicate = False
+        if not data_proyek.empty and 'path' in data_proyek.columns:
+            if path_relatif_folder in data_proyek['path'].values:
+                is_duplicate = True
+
+        if not is_duplicate:
+            # Gabungkan data lama dan baru
+            updated_df = pd.concat([data_proyek, new_entry], ignore_index=True)
+            
+            # Urutkan berdasarkan timestamp terbaru di posisi paling atas
+            updated_df = updated_df.sort_values(by="timestamp", ascending=False)
+
+            # 5. Tulis (Upload) kembali ke Google Sheets
+            conn.update(data=updated_df)
+            st.success(f"✅ Proyek '{nama_proyek}' berhasil disinkronkan ke Google Sheets!")
+        else:
+            st.info(f"ℹ️ Data untuk path '{path_relatif_folder}' sudah ada, database tidak diupdate.")
+
+    except Exception as e:
+        st.error(f"⚠️ Gagal sinkronisasi ke Cloud: {str(e)}")
+        st.warning("Pastikan Anda sudah mengatur 'Secrets' di Dashboard Streamlit.")
+
+# =========================================================
 
 # ==========================================
 # UI APLIKASI UTAMA (TIDAK ADA YANG DIUBAH)
