@@ -4,7 +4,7 @@ import pandas as pd
 import os
 import base64
 from datetime import datetime
-from streamlit_gsheets_connection import GSheetsConnection
+from streamlit_gsheets import GSheetsConnection
 
 st.set_page_config(page_title="GIS-DS 360 Generator", layout="wide")
 
