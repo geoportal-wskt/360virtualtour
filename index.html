@@ -6,47 +6,50 @@
     <title>Hub Virtual Tour 360 - Waskita Infrastruktur</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* Warna Identitas Waskita */
         .bg-waskita { background-color: #002d55; }
         .text-waskita { color: #002d55; }
         .border-waskita { border-color: #002d55; }
         
+        /* Animasi Kartu Proyek */
         .project-card {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .project-card:hover {
             transform: translateY(-3px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            border-left-color: #3498db;
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.15);
         }
         
-        .periode-list::-webkit-scrollbar { width: 4px; }
-        .periode-list::-webkit-scrollbar-track { background: #f1f1f1; }
+        /* Kustomisasi Scrollbar agar rapi */
+        .periode-list::-webkit-scrollbar { width: 5px; }
+        .periode-list::-webkit-scrollbar-track { background: #f8fafc; border-radius: 4px; }
         .periode-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .periode-list::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen flex flex-col font-sans">
+<body class="bg-slate-50 min-h-screen flex flex-col font-sans bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
 
     <!-- HEADER -->
     <header class="bg-waskita text-white shadow-lg sticky top-0 z-50">
         <div class="container mx-auto px-6 py-4 flex flex-col lg:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
-                <div class="bg-white p-2 rounded-lg text-xl">🏗️</div>
+                <div class="bg-white p-2 rounded-lg text-xl shadow-md">🏗️</div>
                 <div>
-                    <h1 class="text-xl font-bold tracking-wide leading-tight uppercase">360° Portal Dokumentasi</h1>
+                    <h1 class="text-xl font-bold tracking-wide leading-tight uppercase text-white">360° Portal Dokumentasi</h1>
                     <p class="text-[10px] text-blue-200 uppercase tracking-widest">Digital Survey & GIS - Divisi Infrastruktur</p>
                 </div>
             </div>
             
             <!-- Filter Cepat -->
-            <div class="flex flex-wrap items-center justify-center gap-2 w-full lg:w-auto">
+            <div class="flex flex-wrap items-center justify-center gap-2 w-full lg:w-auto bg-white/10 p-2 rounded-lg backdrop-blur-sm">
                 <div class="relative">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-xs">🔍</span>
                     <input type="text" id="filterNama" placeholder="Cari proyek..." 
-                        class="pl-8 pr-3 py-1.5 rounded text-xs text-gray-800 focus:outline-none w-40 md:w-56 shadow-inner">
+                        class="pl-8 pr-3 py-1.5 rounded text-xs text-gray-800 focus:outline-none w-40 md:w-56 shadow-inner border border-transparent focus:border-blue-400 transition-colors">
                 </div>
                 <input type="month" id="filterPeriode" 
-                    class="px-2 py-1.5 rounded text-xs text-gray-800 focus:outline-none shadow-inner cursor-pointer">
-                <button onclick="resetFilter()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-xs font-bold transition-colors">
+                    class="px-2 py-1.5 rounded text-xs text-gray-800 focus:outline-none shadow-inner cursor-pointer border border-transparent focus:border-blue-400 transition-colors">
+                <button onclick="resetFilter()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-xs font-bold transition-colors shadow">
                     ↻ Reset
                 </button>
             </div>
@@ -58,58 +61,68 @@
         
         <!-- BAGIAN 1: ALBUM HASIL PENGOLAHAN -->
         <div class="lg:w-2/3">
-            <div class="mb-6">
-                <h2 class="text-2xl font-bold text-waskita flex items-center gap-2">
-                    <span class="text-blue-500">📂</span> Album Hasil Pengolahan
+            <div class="mb-6 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-xl font-bold text-waskita flex items-center gap-2">
+                    <span class="text-blue-500 text-2xl">📂</span> Album Hasil Pengolahan
                 </h2>
                 <p class="text-slate-500 text-sm mt-1">
-                    Kumpulan dokumentasi panorama 360° yang telah diproses untuk memantau progres fisik proyek secara imersif.
+                    Kumpulan dokumentasi panorama 360° untuk memantau progres fisik proyek secara imersif. <br>
+                    <span class="text-xs font-semibold text-orange-500 mt-1 inline-block">⚠️ Catatan: Akses galeri membutuhkan password (Confidential).</span>
                 </p>
             </div>
 
-            <div id="projectGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Area Grid Kartu Proyek -->
+            <div id="projectGrid" class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div class="col-span-full flex flex-col items-center justify-center py-20 text-slate-400">
                     <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-4"></div>
-                    <p class="text-sm italic">Menghubungkan ke Google Sheets...</p>
+                    <p class="text-sm font-bold text-slate-600">Menghubungkan ke Database Cloud...</p>
+                    <p class="text-xs italic mt-1">Mengambil data dari Google Sheets</p>
                 </div>
             </div>
         </div>
 
         <!-- BAGIAN 2: APPS GENERATOR -->
         <aside class="lg:w-1/3">
-            <div class="sticky top-24 space-y-4">
-                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div class="bg-slate-50 p-4 border-b border-slate-100">
+            <div class="sticky top-28 space-y-5">
+                <!-- Kartu Shortcut ke Streamlit -->
+                <div class="bg-white rounded-xl border border-slate-200 shadow-md overflow-hidden transform transition hover:shadow-lg">
+                    <div class="bg-slate-50 p-4 border-b border-slate-200">
                         <h3 class="font-bold text-waskita flex items-center gap-2">
-                            <span class="text-orange-500">🚀</span> Generator App
+                            <span class="text-orange-500 text-lg">🚀</span> Generator App
                         </h3>
                     </div>
                     <div class="p-5">
                         <div class="mb-4">
-                            <h4 class="text-sm font-bold text-slate-700 mb-1">360 Virtual Tour WSKT</h4>
-                            <p class="text-xs text-slate-500 leading-relaxed italic">
-                                Platform internal untuk memproses foto panorama mentah menjadi tur virtual interaktif.
+                            <h4 class="text-sm font-bold text-slate-800 mb-1">360 Virtual Tour WSKT</h4>
+                            <p class="text-xs text-slate-500 leading-relaxed">
+                                Platform internal untuk memproses foto panorama mentah menjadi tur virtual interaktif dengan proteksi keamanan ganda.
                             </p>
                         </div>
                         <a href="https://360virtualtour-wskt.streamlit.app/" target="_blank" 
-                           class="block w-full bg-orange-500 hover:bg-orange-600 text-white text-center py-3 rounded-lg font-bold text-sm transition-all shadow-md active:scale-95">
-                            Buka Aplikasi Generator
+                            class="block w-full bg-orange-500 hover:bg-orange-600 text-white text-center py-3 rounded-lg font-bold text-sm transition-all shadow active:scale-95 border-b-4 border-orange-700 hover:border-orange-600">
+                            + Buat Tur Baru
                         </a>
-                        <p class="text-[10px] text-center text-slate-400 mt-3 italic">
-                            *Sinkronisasi Google Sheets Otomatis
+                        <p class="text-[10px] text-center text-slate-400 mt-3 font-semibold">
+                            *Sinkronisasi Real-Time dengan Hub ini
                         </p>
                     </div>
                 </div>
                 
-                <div class="p-4 bg-slate-800 rounded-xl text-white">
-                    <h4 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Statistik Database</h4>
-                    <div id="statsInfo" class="text-[11px] opacity-80">Memuat data...</div>
+                <!-- Kartu Statistik -->
+                <div class="p-5 bg-slate-800 rounded-xl text-white shadow-md border border-slate-700 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 -mt-4 -mr-4 text-slate-700 opacity-50 text-6xl">📊</div>
+                    <h4 class="text-xs font-bold uppercase tracking-widest text-blue-400 mb-3 relative z-10">Statistik Database</h4>
+                    <div id="statsInfo" class="text-xs opacity-90 relative z-10 space-y-2 font-mono">
+                        <div class="animate-pulse bg-slate-700 h-4 rounded w-full"></div>
+                        <div class="animate-pulse bg-slate-700 h-4 rounded w-2/3"></div>
+                    </div>
                 </div>
             </div>
         </aside>
     </main>
 
-    <footer class="bg-white border-t border-slate-200 py-4 mt-auto">
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-slate-200 py-4 mt-auto shadow-[0_-2px_10px_rgba(0,0,0,0.02)]">
         <div class="container mx-auto px-6 text-center">
             <p class="text-[10px] font-bold text-waskita uppercase tracking-widest">PT Waskita Karya (Persero) Tbk</p>
             <p class="text-[9px] text-slate-400 mt-1 uppercase">Digital Survey & GIS - Divisi Infrastruktur © 2026</p>
@@ -125,66 +138,66 @@
 
         async function loadProjects() {
             try {
+                // Menambahkan timestamp agar selalu mengambil data terbaru (bypass cache)
                 const response = await fetch(sheetUrl + '&t=' + new Date().getTime());
-                const csvText = await response.text();
+                if (!response.ok) throw new Error("Gagal mengambil data dari Google Sheets");
                 
+                const csvText = await response.text();
                 allData = parseCSV(csvText);
                 
-                // Update Statistik
+                // Update Widget Statistik
                 document.getElementById('statsInfo').innerHTML = `
-                    <div class="flex justify-between mb-1"><span>Total Tour:</span> <b>${allData.length}</b></div>
-                    <div class="flex justify-between"><span>Status:</span> <b class="text-emerald-400">Connected</b></div>
+                    <div class="flex justify-between border-b border-slate-700 pb-1">
+                        <span class="text-slate-400">Total Sesi Tour:</span> 
+                        <b class="text-white">${allData.length}</b>
+                    </div>
+                    <div class="flex justify-between pt-1">
+                        <span class="text-slate-400">Status Server:</span> 
+                        <b class="text-emerald-400 flex items-center gap-1">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Connected
+                        </b>
+                    </div>
                 `;
                 
                 renderProjects(allData);
             } catch (error) {
                 console.error("Gagal memuat:", error);
                 document.getElementById('projectGrid').innerHTML = `
-                    <div class="col-span-full text-center py-10 bg-red-50 text-red-600 rounded-xl border border-dashed border-red-200">
-                        <p class="text-sm font-bold">⚠️ Koneksi Google Sheets Gagal</p>
-                        <p class="text-[10px] mt-1">Pastikan Spreadsheet sudah di 'Publish to Web' sebagai CSV.</p>
+                    <div class="col-span-full text-center py-12 bg-red-50 text-red-600 rounded-xl border-2 border-dashed border-red-200">
+                        <div class="text-3xl mb-2">🔌</div>
+                        <p class="text-sm font-bold">Koneksi Database Gagal</p>
+                        <p class="text-[11px] mt-1 text-red-500">Pastikan Spreadsheet sudah di 'Publish to Web' dan perangkat Anda terhubung ke internet.</p>
+                        <button onclick="loadProjects()" class="mt-4 px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded text-xs font-bold transition">Coba Lagi</button>
                     </div>`;
+                document.getElementById('statsInfo').innerHTML = `<span class="text-red-400">Disconnected</span>`;
             }
         }
 
         function parseCSV(csv) {
             const lines = csv.split("\n");
             const result = [];
-            
-            // Deteksi otomatis pemisah (koma atau titik koma)
             const delimiter = lines[0].includes(";") ? ";" : ",";
-            
-            // Ambil header untuk verifikasi (opsional)
-            const headers = lines[0].split(delimiter);
 
             for (let i = 1; i < lines.length; i++) {
                 if (!lines[i].trim()) continue;
                 
                 const currentline = lines[i].split(delimiter);
 
-                // PEMETAAN KOLOM BERDASARKAN GOOGLE SHEETS ANDA:
-                // currentline[0] = Timestamp Otomatis (Gambar Anda)
-                // currentline[1] = nama
-                // currentline[2] = path
-                // currentline[3] = tanggal
-                // currentline[4] = timestamp (Python)
-                // currentline[5] = editor
-
+                // Mapping kolom berdasarkan Google Form Anda
                 const obj = {
                     nama: currentline[1]?.replace(/"/g, '').trim(),
                     path: currentline[2]?.replace(/"/g, '').trim(),
                     tanggal: currentline[3]?.replace(/"/g, '').trim(),
-                    timestamp: currentline[0]?.replace(/"/g, '').trim(), // Kita pakai timestamp asli Google untuk sorting
+                    timestamp: currentline[0]?.replace(/"/g, '').trim(),
                     editor: currentline[5]?.replace(/"/g, '').trim()
                 };
                 
-                // Hanya masukkan jika 'nama' tidak kosong
+                // Pastikan ada nama proyek (bukan baris kosong)
                 if (obj.nama) {
                     result.push(obj);
                 }
             }
-
-            // Sortir: Proyek terbaru (berdasarkan Timestamp Kolom A) muncul paling atas
+            // Sortir data terbaru ke paling atas
             return result.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         }
 
@@ -195,7 +208,7 @@
             const searchKey = document.getElementById('filterNama').value.toLowerCase();
             const monthKey = document.getElementById('filterPeriode').value; // YYYY-MM
 
-            // Grouping data berdasarkan Nama Proyek
+            // Kelompokkan data berdasarkan Nama Proyek
             const grouped = data.reduce((acc, curr) => {
                 if (!acc[curr.nama]) acc[curr.nama] = [];
                 acc[curr.nama].push(curr);
@@ -208,37 +221,46 @@
                 const items = grouped[nama];
                 const matchesName = nama.toLowerCase().includes(searchKey);
                 
-                // Filter tanggal berdasarkan input month
+                // Filter tanggal yang lebih pintar
                 const filteredItems = items.filter(item => {
                     if (!monthKey) return true;
-                    // Format di CSV biasanya DD/MM/YYYY atau YYYY-MM-DD
-                    // Kita asumsikan filter bulan cocok dengan folder path atau string tanggal
-                    const searchMonth = monthKey.replace('-', ''); // 202405
-                    return item.path.includes(searchMonth) || item.tanggal.includes(monthKey);
+                    const searchPattern = monthKey.replace('-', ''); // misal 2026-05 jadi 202605
+                    return item.path.includes(searchPattern) || item.tanggal.includes(monthKey);
                 });
 
                 if (matchesName && filteredItems.length > 0) {
                     hasResult = true;
                     const card = document.createElement('div');
-                    card.className = "project-card bg-white rounded-xl border border-slate-200 border-l-4 border-slate-300 overflow-hidden shadow-sm";
+                    // Style Glassmorphism & Border Kiri Identitas Waskita
+                    card.className = "project-card bg-white/90 backdrop-blur-sm rounded-xl border border-slate-200 border-l-[5px] border-waskita overflow-hidden shadow-sm";
                     
                     let linksHtml = filteredItems.map(item => `
-                        <a href="${item.path}/index.html" target="_blank" 
-                            class="flex justify-between items-center px-3 py-2 my-1 rounded border border-slate-50 bg-slate-50 hover:bg-blue-50 hover:border-blue-100 group transition-all">
-                            <div class="flex flex-col">
-                                <span class="text-[11px] font-semibold text-slate-600 group-hover:text-blue-700">📅 ${item.tanggal}</span>
-                                <span class="text-[8px] text-slate-400 group-hover:text-blue-400 italic">By: ${item.editor || 'System'}</span>
+                        <a href="${item.path}/index.html" target="_blank" title="Akses diamankan dengan password"
+                            class="flex justify-between items-center px-3 py-2.5 my-1.5 rounded-lg border border-slate-100 bg-white hover:bg-blue-50 hover:border-blue-200 group transition-all relative overflow-hidden">
+                            
+                            <div class="flex items-center gap-3 relative z-10">
+                                <div class="text-base text-slate-400 group-hover:text-waskita group-hover:scale-110 transition-all duration-300">🔒</div>
+                                <div class="flex flex-col">
+                                    <span class="text-[11px] font-bold text-slate-700 group-hover:text-blue-800 transition-colors">📅 ${item.tanggal}</span>
+                                    <span class="text-[9px] text-slate-400 group-hover:text-blue-500 italic">Oleh: ${item.editor || 'Tim Survey'}</span>
+                                </div>
                             </div>
-                            <span class="text-[9px] font-bold text-blue-500 opacity-0 group-hover:opacity-100">LIHAT ›</span>
+                            
+                            <span class="text-[9px] font-black bg-blue-100 text-blue-600 px-2 py-1 rounded group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 relative z-10">
+                                BUKA TUR ›
+                            </span>
+                            
+                            <!-- Efek Highlight saat di-hover -->
+                            <div class="absolute inset-0 bg-gradient-to-r from-blue-50/0 to-blue-100/50 transform translate-x-full group-hover:translate-x-0 transition-transform duration-500"></div>
                         </a>
                     `).join('');
 
                     card.innerHTML = `
-                        <div class="p-4 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center">
-                            <h3 class="font-bold text-slate-800 text-xs uppercase truncate" title="${nama}">${nama}</h3>
-                            <span class="bg-slate-200 text-slate-600 text-[8px] px-1.5 py-0.5 rounded-full font-bold">${filteredItems.length} File</span>
+                        <div class="p-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                            <h3 class="font-extrabold text-slate-800 text-[11px] uppercase truncate w-3/4 pl-1" title="${nama}">${nama}</h3>
+                            <span class="bg-waskita text-white text-[9px] px-2 py-1 rounded shadow-sm font-bold">${filteredItems.length} Sesi</span>
                         </div>
-                        <div class="p-3 periode-list overflow-y-auto" style="max-height: 180px;">
+                        <div class="p-3 periode-list overflow-y-auto bg-white/50" style="max-height: 240px;">
                             ${linksHtml}
                         </div>
                     `;
@@ -246,8 +268,15 @@
                 }
             });
 
+            // Tampilan jika hasil pencarian kosong
             if (!hasResult) {
-                grid.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 text-xs bg-white rounded-xl border border-dashed border-slate-200">Data tidak ditemukan.</div>`;
+                grid.innerHTML = `
+                    <div class="col-span-full flex flex-col justify-center items-center py-16 bg-white rounded-xl border-2 border-dashed border-slate-200 text-slate-400">
+                        <span class="text-4xl mb-3">📭</span>
+                        <p class="text-sm font-bold text-slate-600">Tidak ada proyek yang ditemukan.</p>
+                        <p class="text-[11px] mt-1">Coba gunakan kata kunci atau bulan lain.</p>
+                        <button onclick="resetFilter()" class="mt-4 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-xs font-bold transition">Reset Pencarian</button>
+                    </div>`;
             }
         }
 
@@ -257,9 +286,11 @@
             renderProjects(allData);
         }
 
+        // Event Listener untuk Live Search & Filter
         document.getElementById('filterNama').addEventListener('input', () => renderProjects(allData));
         document.getElementById('filterPeriode').addEventListener('change', () => renderProjects(allData));
 
+        // Eksekusi saat halaman dimuat
         window.onload = loadProjects;
     </script>
 </body>

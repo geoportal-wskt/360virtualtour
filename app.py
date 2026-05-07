@@ -434,6 +434,92 @@ if st.button("🚀 Generate Virtual Tour", type="primary"):
             # Menghapus file zip sementara di server agar tidak memenuhi disk
             if os.path.exists(f"{zip_filename}.zip"):
                 os.remove(f"{zip_filename}.zip")
-     
+        # ==========================================
+        # 1. BAGIAN GENERATOR (DI DALAM BUTTON)
+        # ==========================================
+        if st.button("🚀 Generate Virtual Tour", type="primary"):
+            if uploaded_files:
+                folder_proyek = "".join([c for c in nama_proyek if c.isalnum() or c in (' ', '_')]).strip().replace(" ", "_")
+                
+                # Path Folder Utama: Portal_Tour_360/Nama_Proyek/Tanggal
+                base_path = os.path.join("Portal_Tour_360", folder_proyek, periode_str)
+                os.makedirs(base_path, exist_ok=True)
+
+                # ... (Proses generate HTML & Gambar seperti sebelumnya) ...
+
+                st.success(f"✅ Tur Berhasil Dibuat!")
+                st.toast("Menyiapkan file download...", icon="📦")
+
+                # --- LOGIKA ZIP DENGAN STRUKTUR FOLDER ---
+                import shutil
+                
+                # Nama file zip di luar folder utama
+                zip_name_only = f"Tour360_{folder_proyek}_{periode_str}"
+                
+                # Kita buat ZIP dari root "Portal_Tour_360" tapi hanya ambil subfolder yang baru dibuat
+                # Agar saat diekstrak strukturnya: Nama_Proyek/Tanggal/index.html
+                path_untuk_zip = os.path.join(folder_proyek, periode_str)
+                shutil.make_archive(zip_name_only, 'zip', root_dir="Portal_Tour_360", base_dir=path_untuk_zip)
+
+                col_dl1, col_dl2 = st.columns(2)
+                with col_dl1:
+                    with open(f"{zip_name_only}.zip", "rb") as f:
+                        st.download_button(
+                            label="💾 Download ZIP (Struktur Folder)",
+                            data=f,
+                            file_name=f"{zip_name_only}.zip",
+                            mime="application/zip",
+                            use_container_width=True
+                        )
+                
+                with col_dl2:
+                    # Shortcut ke Album (Asumsi URL dashboard utama Anda)
+                    st.link_button("🌐 Buka Album Virtual Tour", url="index.html", use_container_width=True)
+
+                # Bersihkan file zip sementara
+                if os.path.exists(f"{zip_name_only}.zip"):
+                    os.remove(f"{zip_name_only}.zip")
+
+            # ==========================================
+            # 2. FITUR ADMIN: EDIT / HAPUS GALERI
+            # ==========================================
+            if st.session_state.user_role == "admin":
+                st.markdown("---")
+                st.subheader("🛠️ Manajemen Galeri (Admin Only)")
+                
+                # List semua folder proyek yang ada di direktori
+                path_portal = "Portal_Tour_360"
+                if os.path.exists(path_portal):
+                    projects = [d for d in os.listdir(path_portal) if os.path.isdir(os.path.join(path_portal, d))]
+                    
+                    col_admin1, col_admin2 = st.columns(2)
+                    with col_admin1:
+                        sel_proj = st.selectbox("Pilih Proyek untuk Diedit", projects)
+                    
+                    if sel_proj:
+                        dates = [d for d in os.listdir(os.path.join(path_portal, sel_proj))]
+                        with col_admin2:
+                            sel_date = st.selectbox("Pilih Tanggal Survey", dates)
+                        
+                        target_dir = os.path.join(path_portal, sel_proj, sel_date)
+                        
+                        col_btn1, col_btn2 = st.columns(2)
+                        with col_btn1:
+                            if st.button(f"🗑️ Hapus Permanen {sel_date}", type="secondary"):
+                                shutil.rmtree(target_dir)
+                                st.warning(f"Folder {sel_date} telah dihapus dari server.")
+                                st.rerun()
+                        
+                        with col_btn2:
+                            # Fitur Hide (Hanya mengganti nama folder agar tidak terbaca sistem)
+                            if st.button(f"👁️ Hide/Unhide Galeri"):
+                                if not sel_date.startswith("_HIDDEN_"):
+                                    os.rename(target_dir, os.path.join(path_portal, sel_proj, f"_HIDDEN_{sel_date}"))
+                                    st.info("Galeri berhasil disembunyikan.")
+                                else:
+                                    new_date = sel_date.replace("_HIDDEN_", "")
+                                    os.rename(target_dir, os.path.join(path_portal, sel_proj, new_date))
+                                    st.success("Galeri ditampilkan kembali.")
+                                st.rerun()
         st.toast('Data berhasil disinkronkan ke Google Sheets!', icon='✅')
         st.toast('File ZIP siap diunduh.', icon='📦')
