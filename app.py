@@ -361,7 +361,7 @@ if st.session_state.get("tour_generated"):
                     key="btn_download_final"
                 )
         with col_dl2:
-            st.link_button("🌐 Buka Album Virtual Tour", url="index.html", use_container_width=True)
+            st.link_button("🌐 Buka Album Virtual Tour", url="https://geoportal-wskt.github.io/360virtualtour/", use_container_width=True)
 
 
 # ==========================================
@@ -409,6 +409,6 @@ if st.session_state.get("user_role") == "admin":
                     st.info("Belum ada tanggal/data pada proyek ini.")
         else:
             st.info("Belum ada proyek yang dibuat.")
-            
+
         st.toast('Data berhasil disinkronkan ke Google Sheets!', icon='✅')
         st.toast('File ZIP siap diunduh.', icon='📦')
