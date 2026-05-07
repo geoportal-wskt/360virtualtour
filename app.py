@@ -3,73 +3,122 @@ import streamlit.components.v1 as components
 import pandas as pd
 import os
 import base64
+import requests
+from datetime import datetime
+from streamlit_gsheets import GSheetsConnection
+import requests
+import shutil
+from io import BytesIO
 from datetime import datetime
 
 st.set_page_config(page_title="GIS-DS 360 Generator", layout="wide")
 
 # ==========================================
-# FUNGSI UPDATE HUB DASHBOARD
+# 1. KONFIGURASI KREDENSIAL & ROLE
 # ==========================================
-def update_hub_index(nama_proyek, path_relatif_folder, tanggal_str):
-    hub_path = "index.html"
-    base_hub_html = """<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard 360 Tour - Divisi Infrastruktur</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; margin: 0; padding: 40px; }
-        .container { max-width: 1100px; margin: auto; }
-        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; margin-bottom: 5px; }
-        .subtitle { color: #7f8c8d; margin-bottom: 30px; font-size: 1.1em; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-decoration: none; color: inherit; display: block; border-left: 5px solid #bdc3c7; }
-        .card:hover { transform: translateY(-5px); border-left: 5px solid #3498db; }
-        .card h3 { margin: 0 0 10px 0; color: #2980b9; font-size: 1.1em; }
-        .card p { font-size: 0.85em; color: #7f8c8d; margin: 0; }
-        .badge { background: #2ecc71; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.7em; float: right; font-weight: bold;}
-    </style>
-</head>
-<body>
-<div class="container">
-    <h1>🏗️ Central Hub Virtual Tour 360</h1>
-    <div class="subtitle">Platform Dokumentasi Visual - Divisi Infrastruktur</div>
-    <div class="grid">
-        <!-- KARTU_PROYEK_DISINI -->
-    </div>
-</div>
-</body>
-</html>"""
-
-    if not os.path.exists(hub_path):
-        with open(hub_path, "w", encoding="utf-8") as f:
-            f.write(base_hub_html)
-            
-    with open(hub_path, "r", encoding="utf-8") as f:
-        content = f.read()
-
-    if path_relatif_folder in content:
-        return
-
-    new_card = f"""
-        <a href="{path_relatif_folder}/index.html" class="card">
-            <span class="badge">Baru</span>
-            <h3>{nama_proyek}</h3>
-            <p>Periode Data: <strong>{tanggal_str}</strong></p>
-        </a>"""
-
-    if '<div class="grid">' in content:
-        updated_content = content.replace('<div class="grid">', f'<div class="grid">\n{new_card}')
-    else:
-        updated_content = content.replace('<!-- KARTU_PROYEK_DISINI -->', f'<!-- KARTU_PROYEK_DISINI -->\n{new_card}')
-
-    with open(hub_path, "w", encoding="utf-8") as f:
-        f.write(updated_content)
-
+# Data ini bisa dipindah ke file database/secret nantinya
+USERS = {
+    "admin_gis": {"password": "Infra12345%", "role": "admin", "nama": "Administrator GIS"},
+    "tim_proyek": {"password": "proyek2026", "role": "proyek", "nama": "Tim Lapangan Proyek"}
+}
 
 # ==========================================
-# UI APLIKASI UTAMA
+# 2. SISTEM LOGIN (SESSION STATE)
+# ==========================================
+def init_auth():
+    if 'logged_in' not in st.session_state:
+        st.session_state.logged_in = False
+        st.session_state.user_role = None
+        st.session_state.user_full_name = ""
+
+def login_ui():
+    st.sidebar.image("https://upload.wikimedia.org/wikipedia/id/a/af/Waskita_Karya_logo.svg", width=200)
+    st.sidebar.title("🔐 Akses Internal")
+    
+    with st.sidebar.form("login_form"):
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        submit = st.form_submit_button("Login")
+        
+        if submit:
+            if username in USERS and USERS[username]["password"] == password:
+                st.session_state.logged_in = True
+                st.session_state.user_role = USERS[username]["role"]
+                st.session_state.user_full_name = USERS[username]["nama"]
+                st.success(f"Selamat datang, {st.session_state.user_full_name}")
+                st.rerun()
+            else:
+                st.error("Username atau Password salah!")
+
+def logout():
+    if st.sidebar.button("🚪 Logout"):
+        st.session_state.logged_in = False
+        st.session_state.user_role = None
+        st.rerun()
+
+# Jalankan Inisialisasi
+init_auth()
+
+if not st.session_state.logged_in:
+    login_ui()
+    st.info("💡 Silakan masukkan kredensial pada sidebar untuk mengakses sistem.")
+    st.stop() # Mengunci seluruh aplikasi di bawah baris ini
+else:
+    logout()
+    st.sidebar.markdown("---")
+    st.sidebar.write(f"👤 **User:** {st.session_state.user_full_name}")
+    st.sidebar.write(f"🔰 **Role:** {st.session_state.user_role.upper()}")
+
+# ==========================================
+# 3. KODE APLIKASI UTAMA (LANJUTKAN DISINI)
+# ==========================================
+
+# --- Contoh Pembatasan Menu Hapus (Hanya Admin) ---
+if st.session_state.user_role == "admin":
+    with st.expander("⚠️ Pengaturan Database (Hanya Admin)"):
+        st.warning("Menu ini hanya dapat diakses oleh Admin GIS.")
+        if st.button("🗑️ Reset Database (projects.json)"):
+            if os.path.exists("projects.json"):
+                os.remove("projects.json")
+                st.success("Database berhasil dihapus!")
+                st.rerun()
+else:
+    st.info("ℹ️ Anda masuk sebagai Tim Proyek. Anda dapat menambahkan tur baru, namun fitur penghapusan dinonaktifkan.")
+
+# Masukkan kode selectbox proyek, upload foto, dan fungsi generator Anda di bawah sini...
+
+# =========================================================
+# VERSI GOOGLE SHEETS (COP-PAS READY)
+# =========================================================
+
+def update_projects_database(nama_proyek, path_relatif_folder, tanggal_str):
+    """
+    Fungsi ini mengirim data ke Google Sheets melalui Google Form (Tanpa Google Cloud Console).
+    """
+    # URL Google Form Anda (sudah saya sesuaikan)
+    url = "https://docs.google.com/forms/d/e/1FAIpQLSd_jfuTzmgiMTNfkJnj6tyTlakhav6y5583POSBhYX4RvTGvQ/formResponse"
+    
+    # ID Entry yang Anda temukan tadi
+    payload = {
+        "entry.1909594847": nama_proyek,          # Nama Proyek
+        "entry.1997775924": path_relatif_folder,  # Path / Folder
+        "entry.473746175": tanggal_str,           # Tanggal
+        "entry.1021577494": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), # Waktu Input
+        "entry.2051024028": st.session_state.get('user_full_name', 'System') # Nama Editor
+    }
+
+    try:
+        # Proses 'mengetik' otomatis ke Google Form
+        response = requests.post(url, data=payload)
+        if response.status_code == 200:
+            st.success(f"✅ Proyek '{nama_proyek}' berhasil dicatat di Cloud!")
+        else:
+            st.error(f"⚠️ Gagal sinkronisasi. Error Code: {response.status_code}")
+    except Exception as e:
+        st.error(f"Terjadi kesalahan koneksi: {e}")
+
+# ==========================================
+# UI APLIKASI UTAMA (TIDAK ADA YANG DIUBAH)
 # ==========================================
 st.title("🏗️ 360 Professional Tour Generator")
 st.markdown("### Digital Survey & GIS - Divisi Infrastruktur")
@@ -349,8 +398,42 @@ if st.button("🚀 Generate Virtual Tour", type="primary"):
             with open(os.path.join(base_path, "index.html"), "w", encoding="utf-8") as f:
                 f.write(html_template)
             
+            # --- PEMANGGILAN FUNGSI BARU ---
             relative_folder_path = f"Portal_Tour_360/{folder_proyek}/{periode_str}"
-            update_hub_index(nama_proyek, relative_folder_path, tanggal_format_indo)
+            update_projects_database(nama_proyek, relative_folder_path, tanggal_format_indo)
             
-        st.success(f"✅ Tur Berhasil Dibuat!")
-        st.balloons()
+        st.success(f"✅ Tur Berhasil Dibuat dan Tersimpan di Database Dashboard!")
+
+        # ==========================================
+        # LOGIKA DOWNLOAD ZIP (Diletakkan di sini)
+        # ==========================================
+        import shutil
+        from io import BytesIO
+
+        st.markdown("---")
+        st.subheader("📦 Siapkan Download Offline")
+        
+        with st.spinner("Mengompresi file ke ZIP..."):
+            # Nama file ZIP (tanpa spasi untuk keamanan OS)
+            zip_filename = f"Tour360_{folder_proyek}_{periode_str}"
+            
+            # Membuat ZIP dari folder base_path
+            # base_path berisi: index.html dan foto-foto proyek
+            shutil.make_archive(zip_filename, 'zip', base_path)
+            
+            with open(f"{zip_filename}.zip", "rb") as f:
+                st.download_button(
+                    label="💾 Download Hasil Virtual Tour (ZIP)",
+                    data=f,
+                    file_name=f"{zip_filename}.zip",
+                    mime="application/zip",
+                    type="primary",
+                    help="Klik untuk mengunduh seluruh tour agar bisa dibuka secara offline"
+                )
+            
+            # Menghapus file zip sementara di server agar tidak memenuhi disk
+            if os.path.exists(f"{zip_filename}.zip"):
+                os.remove(f"{zip_filename}.zip")
+     
+        st.toast('Data berhasil disinkronkan ke Google Sheets!', icon='✅')
+        st.toast('File ZIP siap diunduh.', icon='📦')
