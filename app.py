@@ -265,37 +265,30 @@ if st.button("🚀 Generate Virtual Tour", type="primary", use_container_width=T
             <html>
             <head>
                 <meta charset="utf-8">
+                <script>
+                    (function() {{
+                        if (localStorage.getItem("session_gis_waskita") !== "active") {{
+                            alert("Sesi tidak ditemukan. Silakan login terlebih dahulu di Dashboard Utama.");
+                            window.location.href = "../../../index.html"; 
+                        }}
+                    }})();
+                </script>
                 <title>{nama_proyek} | {tanggal_format_indo}</title>
                 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css"/>
                 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
                 <style>
                     body {{ margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #000; overflow: hidden; }}
-                    #main-content {{ filter: blur(20px); transition: filter 0.5s ease; pointer-events: none; }}
-                    #lock-screen {{ position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; text-align: center; }}
-                    .login-box {{ background: rgba(255,255,255,0.1); padding: 30px; border-radius: 15px; border: 1px solid #3498db; backdrop-filter: blur(10px); }}
-                    input[type="password"] {{ padding: 12px; border-radius: 5px; border: none; width: 200px; margin-bottom: 15px; text-align: center; font-size: 1.1em; }}
-                    #unlock-btn {{ background: #3498db; color: white; border: none; padding: 12px 30px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }}
-                    #unlock-btn:hover {{ background: #2980b9; transform: scale(1.05); }}
-                    #error-msg {{ color: #ff7675; margin-top: 10px; font-size: 0.9em; display: none; }}
+                    #main-content {{ width: 100vw; height: 100vh; position: relative; }}
                     #header {{ position: absolute; top: 0; width: 100%; background: rgba(0,0,0,0.8); color: white; padding: 15px 25px; z-index: 10; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; border-bottom: 2px solid #3498db; }}
                     #panorama {{ width: 100vw; height: 100vh; }}
                     #footer {{ position: absolute; bottom: 35px; width: 100%; background: rgba(0,0,0,0.7); padding: 12px; z-index: 10; display: flex; gap: 15px; overflow-x: auto; border-top: 1px solid #444; align-items: center; }}
                     .thumb-container {{ text-align: center; color: white; font-size: 11px; font-weight: bold; min-width: 100px; }}
                     .thumb {{ width: 110px; height: 65px; object-fit: cover; cursor: pointer; border: 2px solid #555; border-radius: 4px; transition: 0.2s; }}
+                    .thumb:hover {{ border-color: #3498db; transform: scale(1.05); }}
                     #copyright-bar {{ position: absolute; bottom: 0; left: 0; width: 100%; background-color: #002d55; color: white; text-align: center; padding: 8px 0; font-size: 0.8em; z-index: 20; letter-spacing: 0.5px; }}
                 </style>
             </head>
             <body>
-                <div id="lock-screen">
-                    <div class="login-box">
-                        <img src="https://upload.wikimedia.org/wikipedia/id/a/af/Waskita_Karya_logo.svg" width="150" style="margin-bottom: 20px;">
-                        <h3>GIS-DS Confidential Access</h3>
-                        <p style="color: #bdc3c7; font-size: 0.9em;">Masukkan Password Proyek</p>
-                        <input type="password" id="pass-input" placeholder="Password"> <br>
-                        <button id="unlock-btn" onclick="checkPass()">Buka Galeri</button>
-                        <div id="error-msg">Password Salah! Silakan hubungi Admin.</div>
-                    </div>
-                </div>
                 <div id="main-content">
                     <div id="header">
                         <div><strong>PROYEK:</strong> {nama_proyek}<br><span style="font-size: 0.8em;">Periode: {tanggal_format_indo}</span></div>
@@ -306,17 +299,7 @@ if st.button("🚀 Generate Virtual Tour", type="primary", use_container_width=T
                     <div id="footer">{footer_content}</div>
                 </div>
                 <script>
-                    const correctPass = "{password_proyek}"; 
-                    function checkPass() {{
-                        const input = document.getElementById('pass-input').value;
-                        if(input === correctPass) {{
-                            document.getElementById('lock-screen').style.display = 'none';
-                            document.getElementById('main-content').style.filter = 'none';
-                            document.getElementById('main-content').style.pointerEvents = 'auto';
-                        }} else {{
-                            document.getElementById('error-msg').style.display = 'block';
-                        }}
-                    }}
+                    // HAPUS FUNGSI checkPass(), SISA INISIALISASI PANNELLUM SAJA
                     var viewer = pannellum.viewer('panorama', {{
                         "default": {{ "firstScene": "scene_0", "autoLoad": true, "sceneFadeDuration": 1000 }},
                         "scenes": {{ {scenes_js} }}
@@ -324,8 +307,7 @@ if st.button("🚀 Generate Virtual Tour", type="primary", use_container_width=T
                 </script>
             </body>
             </html>
-            """
-            
+            """            
             with open(os.path.join(base_path, "index.html"), "w", encoding="utf-8") as f:
                 f.write(html_template)
             
