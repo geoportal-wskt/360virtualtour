@@ -26,7 +26,7 @@ if 'logged_in' not in st.session_state:
     st.session_state.user_full_name = ""
 
 def login_ui():
-    st.sidebar.image("https://upload.wikimedia.org/wikipedia/id/a/af/Waskita_Karya_logo.svg", width=200)
+    st.sidebar.image("https://github.com/geoportal-wskt/360virtualtour/blob/main/logo_w360.png?raw=true", width=200)
     st.sidebar.title("🔐 Akses Internal")
     
     with st.sidebar.form("login_form"):
@@ -76,7 +76,8 @@ def update_projects_database(nama_proyek, path_relatif_folder, tanggal_str):
 # ==========================================
 # 4. UI APLIKASI UTAMA (GENERATOR)
 # ==========================================
-st.title("🏗️ 360 Professional Tour Generator")
+st.title("W-360 Virtual Tour Generator")
+st.image("https://github.com/geoportal-wskt/360virtualtour/blob/main/logo_w360.png?raw=true", width=150)
 st.markdown("### Digital Survey & GIS - Divisi Infrastruktur")
 
 st.subheader("1. Pengaturan Proyek")
