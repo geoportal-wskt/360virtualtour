@@ -76,9 +76,25 @@ def update_projects_database(nama_proyek, path_relatif_folder, tanggal_str):
 # ==========================================
 # 4. UI APLIKASI UTAMA (GENERATOR)
 # ==========================================
-st.title("W-360 Virtual Tour Generator")
-st.image("https://github.com/geoportal-wskt/360virtualtour/blob/main/logo_w360.png?raw=true", width=150)
-st.markdown("### Digital Survey & GIS - Divisi Infrastruktur")
+
+header_html = f"""
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #e5e7eb;">
+    <div style="flex: 1;">
+        <h1 style="margin: 0; padding: 0; font-size: 2.2rem; font-weight: bold; color: #1f2937;">
+            W-360 Virtual Tour Generator
+        </h1>
+        <h3 style="margin: 8px 0 0 0; padding: 0; font-size: 1.2rem; font-weight: normal; color: #4b5563;">
+            Digital Survey & GIS - Divisi Infrastruktur
+        </h3>
+    </div>
+    <div style="margin-left: 20px;">
+        <img src="https://github.com/geoportal-wskt/360virtualtour/blob/main/logo_w360.png?raw=true" style="height: 90px; object-fit: contain;">
+    </div>
+</div>
+"""
+
+# Menampilkan header ke layar Streamlit
+st.markdown(header_html, unsafe_allow_html=True)
 
 st.subheader("1. Pengaturan Proyek")
 col_proj, col_date = st.columns(2)
